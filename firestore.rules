@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function myProfile() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function myRole() { return myProfile().role; }
+
+    // Users can read/edit only their own profile. Role field is set at signup
+    // and should not be changed by the client afterwards.
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isSignedIn() && request.auth.uid == uid
+                    && request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    // Courses: readable by signed-in users; writes restricted to teachers/CRs via admin tooling.
+    match /courses/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && myRole() in ['teacher', 'cr'];
+    }
+
+    // Announcements: public read of active/unexpired ones; only the CR author may write.
+    match /announcements/{id} {
+      allow read: if resource.data.isActive == true
+                   && (!('expiresAt' in resource.data) || resource.data.expiresAt > request.time);
+      allow create: if isSignedIn() && myRole() == 'cr' && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid && myRole() == 'cr';
+    }
+
+    // Attendance records: students read their own; teachers read/write for their assigned courses.
+    match /attendanceRecords/{id} {
+      allow read: if isSignedIn() && (
+        resource.data.studentId == request.auth.uid ||
+        myRole() in ['teacher', 'cr']
+      );
+      allow create: if isSignedIn() && (
+        // Student self check-in: must be their own record.
+        (myRole() == 'student' && request.resource.data.studentId == request.auth.uid
+          && request.resource.data.source == 'student_self_checkin') ||
+        // Teacher marking: must be for a course they teach.
+        (myRole() == 'teacher' && request.resource.data.source == 'teacher_marked'
+          && get(/databases/$(database)/documents/courses/$(request.resource.data.courseId)).data.teacherId == request.auth.uid)
+      );
+      allow update, delete: if isSignedIn() && myRole() == 'teacher';
+    }
+
+    // Timetable: student manages only their own entries.
+    match /timetableEntries/{id} {
+      allow read, write: if isSignedIn() && (
+        resource == null || resource.data.studentId == request.auth.uid
+      ) && request.resource.data.studentId == request.auth.uid;
+    }
+
+    // Attendance sessions: teacher manages only their own sessions.
+    match /attendanceSessions/{id} {
+      allow read: if isSignedIn() && myRole() in ['teacher', 'cr'];
+      allow create, update, delete: if isSignedIn() && myRole() == 'teacher'
+        && request.resource.data.teacherId == request.auth.uid;
+    }
+  }
+}

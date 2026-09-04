@@ -1,0 +1,17 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Attendance photos are private: a student may only upload/read their own,
+    // and no one gets public read access. Teachers/CRs should fetch photoUrl
+    // via a verified backend/Cloud Function if broader access is ever needed.
+    match /attendance-photos/{studentId}/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == studentId;
+      allow write: if request.auth != null
+                   && request.auth.uid == studentId
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow delete: if false;
+    }
+  }
+}
