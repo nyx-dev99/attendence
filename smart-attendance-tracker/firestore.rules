@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function myProfile() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function myRole() { return myProfile().role; }
+
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isSignedIn() && request.auth.uid == uid
+                    && request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    match /courses/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && myRole() in ['teacher', 'cr'];
+    }
+
+    match /announcements/{id} {
+      allow read: if resource.data.isActive == true
+                   && (!('expiresAt' in resource.data) || resource.data.expiresAt > request.time);
+      allow create: if isSignedIn() && myRole() == 'cr' && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid && myRole() == 'cr';
+    }
+
+    match /attendanceRecords/{id} {
+      allow read: if isSignedIn() && (
+        resource.data.studentId == request.auth.uid ||
+        myRole() in ['teacher', 'cr']
+      );
+      allow create: if isSignedIn() && (
+        (myRole() == 'student' && request.resource.data.studentId == request.auth.uid
+          && request.resource.data.source == 'student_self_checkin') ||
+        (myRole() == 'teacher' && request.resource.data.source == 'teacher_marked'
+          && get(/databases/$(database)/documents/courses/$(request.resource.data.courseId)).data.teacherId == request.auth.uid)
+      );
+      allow update, delete: if isSignedIn() && myRole() == 'teacher';
+    }
+
+    match /timetableEntries/{id} {
+      allow read, write: if isSignedIn() && (
+        resource == null || resource.data.studentId == request.auth.uid
+      ) && request.resource.data.studentId == request.auth.uid;
+    }
+
+    match /attendanceSessions/{id} {
+      allow read: if isSignedIn() && myRole() in ['teacher', 'cr'];
+      allow create, update, delete: if isSignedIn() && myRole() == 'teacher'
+        && request.resource.data.teacherId == request.auth.uid;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
