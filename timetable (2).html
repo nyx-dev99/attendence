@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --ink: #1C1E24;
+    --ink-dim: #8B8D97;
+    --ink-faint: #B4B6BE;
+    --line: #EAE8E2;
+    --accent: #5B4CF0;
+    --accent-ink: #4C3FE0;
+    --accent-soft: rgba(91,76,240,0.08);
+    --accent-soft-2: rgba(91,76,240,0.14);
+    --live: #F0973D;
+    --live-soft: rgba(240,151,61,0.12);
+    --shadow-sm: 0 1px 2px rgba(28,30,36,0.04);
+    --shadow-md: 0 10px 30px -14px rgba(28,30,36,0.16);
+    --radius: 18px;
+    --radius-sm: 12px;
+    --font-display: 'Fraunces', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+  body.dark{
+    --bg: #14151A;
+    --surface: #1E2027;
+    --ink: #F0EEEA;
+    --ink-dim: #9A9CA6;
+    --ink-faint: #6C6E78;
+    --line: #2E303A;
+    --accent-soft: rgba(91,76,240,0.16);
+    --accent-soft-2: rgba(91,76,240,0.26);
+    --live-soft: rgba(240,151,61,0.18);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 10px 30px -14px rgba(0,0,0,0.6);
+  }
+  body{ transition:background 0.25s ease, color 0.25s ease; }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 100% -10%, rgba(91,76,240,0.06), transparent),
+      radial-gradient(900px 500px at -10% 10%, rgba(240,151,61,0.05), transparent),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:720px; margin:0 auto; padding:32px 20px 90px; }
+  .brand{ display:flex; align-items:center; justify-content:space-between; margin-bottom:26px; }
+  .brand-mark{ font-family:var(--font-display); font-size:23px; font-weight:600; letter-spacing:0.2px; color:var(--ink); }
+  .brand-mark span{color:var(--accent);}
+  .brand-sub{
+    font-family:var(--font-mono); font-size:12px; color:var(--ink-dim);
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:6px 12px; box-shadow:var(--shadow-sm);
+  }
+  .panel{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:40px 32px; box-shadow:var(--shadow-md); animation:riseIn 0.4s ease;
+  }
+  @keyframes riseIn{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+  .panel h1{ font-family:var(--font-display); font-weight:600; font-size:27px; line-height:1.25; margin:0 0 10px; color:var(--ink); }
+  .panel p.lead{ color:var(--ink-dim); font-size:14.5px; margin:0 0 26px; line-height:1.6; }
+  label.field-label{
+    display:block; font-size:12px; font-weight:600; color:var(--ink-dim);
+    margin-bottom:8px; text-transform:uppercase; letter-spacing:0.4px;
+  }
+  input#programInput{
+    width:100%; background:var(--bg); border:1.5px solid var(--line); color:var(--ink);
+    font-family:var(--font-body); font-size:15px; padding:14px 16px; border-radius:var(--radius-sm);
+    outline:none; transition:border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  input#programInput:focus{ border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft); }
+  .program-list{ margin-top:12px; display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto; padding-right:2px; }
+  .program-opt{
+    background:var(--surface); border:1.5px solid var(--line); border-radius:var(--radius-sm);
+    padding:14px 16px; font-size:13.5px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+    transition:transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .program-opt:hover{ border-color:var(--accent); box-shadow:var(--shadow-sm); transform:translateX(2px); }
+  .program-opt .count{ color:var(--ink-faint); font-size:11px; font-family:var(--font-mono); }
+  button.go{
+    margin-top:22px; width:100%; background:var(--accent); color:#fff; border:none; padding:15px;
+    font-family:var(--font-body); font-weight:600; font-size:14.5px; letter-spacing:0.2px; cursor:pointer;
+    border-radius:var(--radius-sm); transition:background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+    box-shadow:0 8px 20px -10px rgba(91,76,240,0.55);
+  }
+  button.go:hover:not(:disabled){ background:var(--accent-ink); transform:translateY(-1px); }
+  button.go:active:not(:disabled){ transform:translateY(0); }
+  button.go:disabled{ background:#E4E2FB; color:#A9A3F5; cursor:not-allowed; box-shadow:none; }
+  .hint{ font-size:12px; color:var(--ink-dim); margin-top:14px; line-height:1.6; }
+
+  .breadcrumb{ font-size:12px; color:var(--ink-dim); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+  .breadcrumb b{ color:var(--ink); font-weight:600; }
+  .back-link{ color:var(--accent); cursor:pointer; text-decoration:underline; font-weight:600; background:none; border:none; font-family:var(--font-body); font-size:12px; padding:0; }
+
+  .year-grid{ display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+  .year-opt{
+    background:var(--surface); border:1.5px solid var(--line); border-radius:var(--radius-sm);
+    padding:16px 18px; font-size:14.5px; font-weight:600; cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+    transition:transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .year-opt:hover{ border-color:var(--accent); box-shadow:var(--shadow-sm); transform:translateX(2px); }
+  .year-opt.selected{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent-ink); }
+  .year-opt .check{ opacity:0; color:var(--accent); font-weight:700; transition:opacity 0.15s ease; }
+  .year-opt.selected .check{ opacity:1; }
+
+  #dashboard{ display:none; animation:riseIn 0.4s ease; }
+  .program-row{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; gap:12px; }
+  .program-row h1{ font-family:var(--font-display); font-size:20px; font-weight:600; margin:0 0 2px; color:var(--ink); line-height:1.3; }
+  .program-row .year-sub{ font-size:12px; color:var(--ink-dim); font-weight:500; }
+  .change-link{
+    color:var(--accent); font-size:12px; font-weight:600; text-decoration:none; cursor:pointer;
+    background:var(--accent-soft); border:none; font-family:var(--font-body); padding:8px 12px;
+    border-radius:999px; transition:background 0.15s ease; white-space:nowrap; flex-shrink:0;
+  }
+  .change-link:hover{ background:var(--accent-soft-2); }
+
+  #statusBanner{
+    background:var(--surface); border:1.5px solid var(--line); border-radius:var(--radius);
+    padding:22px; margin-bottom:22px; box-shadow:var(--shadow-md);
+    transition:border-color 0.3s ease, background 0.3s ease;
+  }
+  #statusBanner.live{ border-color:var(--live); background:linear-gradient(180deg, var(--live-soft), var(--surface) 60%); }
+  .status-eyebrow{ font-size:11px; font-weight:700; color:var(--ink-dim); display:flex; justify-content:space-between; text-transform:uppercase; letter-spacing:0.6px; }
+  #statusBanner.live .status-eyebrow span:first-child{ color:var(--live); }
+  .status-clock{ font-family:var(--font-mono); font-weight:500; letter-spacing:0; text-transform:none; }
+  .status-main{ font-family:var(--font-display); font-size:22px; font-weight:600; margin:12px 0 6px; display:flex; align-items:center; }
+  .status-main .dot{
+    display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--live);
+    margin-right:10px; box-shadow:0 0 0 0 rgba(240,151,61,0.5);
+  }
+  @keyframes livePulse{ 0%{box-shadow:0 0 0 0 rgba(240,151,61,0.45);} 70%{box-shadow:0 0 0 9px rgba(240,151,61,0);} 100%{box-shadow:0 0 0 0 rgba(240,151,61,0);} }
+  #statusBanner.live .dot{ animation:livePulse 1.8s infinite; }
+  .status-detail{ font-size:13.5px; color:var(--ink-dim); }
+  .status-detail b{ color:var(--ink); font-weight:600; }
+
+  .progress-track{
+    margin-top:14px; height:5px; border-radius:999px; background:var(--line); overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; width:0%; background:var(--live); border-radius:999px;
+    transition:width 1s linear;
+  }
+
+  .day-chips{
+    display:flex; gap:6px; overflow-x:auto; margin-bottom:16px; padding-bottom:2px;
+    -ms-overflow-style:none; scrollbar-width:none;
+  }
+  .day-chips::-webkit-scrollbar{ display:none; }
+  .day-chip{
+    flex:0 0 auto; background:var(--surface); border:1.5px solid var(--line); color:var(--ink-dim);
+    font-family:var(--font-body); font-weight:600; font-size:12px; padding:8px 14px;
+    border-radius:999px; cursor:pointer; transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    white-space:nowrap;
+  }
+  .day-chip:hover{ transform:translateY(-1px); border-color:var(--accent); }
+  .day-chip.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .day-chip .chip-dot{
+    display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--live);
+    margin-left:5px; vertical-align:middle;
+  }
+
+  .theme-toggle{
+    display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--line);
+    border-radius:999px; padding:6px 8px 6px 12px; cursor:pointer; box-shadow:var(--shadow-sm);
+    font-family:var(--font-mono); font-size:11px; color:var(--ink-dim); user-select:none;
+  }
+  .theme-toggle .track{
+    width:34px; height:18px; border-radius:999px; background:var(--line); position:relative; transition:background 0.2s ease;
+  }
+  .theme-toggle .knob{
+    position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%;
+    background:var(--accent); transition:transform 0.2s ease; box-shadow:0 1px 3px rgba(0,0,0,0.3);
+  }
+  body.dark .theme-toggle .track{ background:var(--accent-soft-2); }
+  body.dark .theme-toggle .knob{ transform:translateX(16px); background:var(--live); }
+
+  nav.tabs{
+    display:flex; background:var(--surface); border:1.5px solid var(--line); border-radius:999px;
+    margin-bottom:22px; padding:4px; gap:4px; box-shadow:var(--shadow-sm);
+  }
+  nav.tabs button{
+    flex:1; background:none; border:none; color:var(--ink-dim); font-family:var(--font-body);
+    font-weight:600; font-size:12.5px; letter-spacing:0.3px; padding:11px; cursor:pointer;
+    border-radius:999px; transition:background 0.2s ease, color 0.2s ease;
+  }
+  nav.tabs button.active{ color:#fff; background:var(--accent); box-shadow:0 6px 16px -8px rgba(91,76,240,0.6); }
+
+  #timetableView, #teachersView{ animation:fadeIn 0.25s ease; }
+  @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+  .day-block{ margin-bottom:22px; }
+  .day-heading{
+    font-family:var(--font-display); font-weight:600; font-size:15px; color:var(--accent-ink);
+    padding-bottom:8px; margin-bottom:4px; display:flex; align-items:baseline; gap:8px;
+  }
+  .day-heading .today-badge{
+    font-family:var(--font-body); font-size:10px; font-weight:700; color:#fff; background:var(--accent);
+    padding:2px 8px; border-radius:999px; letter-spacing:0.3px;
+  }
+  .class-row{
+    display:grid; grid-template-columns:74px 1fr; gap:14px; padding:13px 14px;
+    background:var(--surface); border:1.5px solid var(--line); border-radius:var(--radius-sm);
+    margin-bottom:8px; transition:transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .class-row:hover{ transform:translateX(2px); box-shadow:var(--shadow-sm); }
+  .class-row.now-live{ background:var(--live-soft); border-color:var(--live); }
+  .class-time{ font-size:12px; font-family:var(--font-mono); font-weight:500; color:var(--ink-dim); line-height:1.6; }
+  .class-name{ font-size:14px; font-weight:600; color:var(--ink); display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+  .class-meta{ font-size:12px; color:var(--ink-dim); margin-top:3px; }
+  .live-tag{
+    display:inline-block; background:var(--live); color:#fff; font-size:9.5px; font-weight:700;
+    padding:2px 7px; border-radius:999px; letter-spacing:0.4px;
+  }
+
+  .teacher-card{
+    background:var(--surface); border:1.5px solid var(--line); border-radius:var(--radius-sm);
+    padding:16px 18px; margin-bottom:10px; transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .teacher-card:hover{ transform:translateX(2px); box-shadow:var(--shadow-sm); }
+  .teacher-name{ font-family:var(--font-display); font-weight:600; font-size:15.5px; margin:0 0 6px; color:var(--ink); }
+  .teacher-row{ font-size:12.5px; color:var(--ink-dim); display:flex; gap:8px; }
+  .teacher-row b{ color:var(--accent-ink); font-weight:600; min-width:90px; }
+
+  .empty-note{ font-size:12px; color:var(--ink-dim); padding:16px 0; }
+  footer.data-note{
+    margin-top:30px; border-top:1px solid var(--line); padding-top:14px; font-size:11px;
+    color:var(--ink-faint); line-height:1.7; text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-mark">CLASS<span>BOARD</span></div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div class="brand-sub" id="clockDisplay"></div>
+      <div class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <span id="themeLabel">Light</span>
+        <div class="track"><div class="knob"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 1: choose programme -->
+  <div id="onboarding" class="panel">
+    <h1>Which course are you enrolled in?</h1>
+    <p class="lead">Pick your programme from the list below, or start typing to search.</p>
+    <label class="field-label" for="programInput">Programme</label>
+    <div class="program-list" id="programList"></div>
+    <input id="programInput" type="text" placeholder="Search for your programme…" autocomplete="off">
+    <button class="go" id="programNextBtn" disabled style="margin-top:14px;">Next</button>
+    <div class="hint">Loaded so far: <b style="color:var(--ink)">B.Sc. (Hons) Physics</b> and <b style="color:var(--ink)">B.Sc. Physical Science with Chemistry</b>, each with First / Second / Third Year timetables.</div>
+  </div>
+
+  <!-- Step 2: choose year -->
+  <div id="yearStep" class="panel" style="display:none;">
+    <div class="breadcrumb"><button class="back-link" id="backToProgram">&larr; change course</button></div>
+    <h1>Which year are you in?</h1>
+    <p class="lead" id="yearLead"></p>
+    <div class="year-grid" id="yearGrid"></div>
+    <button class="go" id="viewTimetableBtn" disabled>View my timetable</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard">
+    <div class="program-row">
+      <div>
+        <h1 id="programTitle"></h1>
+        <div class="year-sub" id="yearSub"></div>
+      </div>
+      <button class="change-link" id="changeProgram">Change</button>
+    </div>
+
+    <div id="statusBanner">
+      <div class="status-eyebrow"><span id="statusEyebrow">STATUS</span><span id="statusClock" class="status-clock"></span></div>
+      <div class="status-main"><span class="dot" id="statusDot" style="display:none;"></span><span id="statusMain"></span></div>
+      <div class="status-detail" id="statusDetail"></div>
+      <div class="progress-track" id="progressTrack" style="display:none;"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <nav class="tabs">
+      <button id="tabTimetable" class="active">TIMETABLE</button>
+      <button id="tabTeachers">TEACHERS</button>
+    </nav>
+
+    <div class="day-chips" id="dayChips"></div>
+
+    <div id="timetableView"></div>
+    <div id="teachersView" style="display:none;"></div>
+
+    <footer class="data-note">Times shown in your device's local time. Ongoing-class detection checks the current day and time against each entry every 30 seconds.</footer>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   SCHEDULE_DATA — replace with the real timetable.
+   Structure: { "Programme Name": { years: { "First Year": {schedule, teachers}, ... } } }
+   schedule: [{ day, start:"HH:MM", end:"HH:MM", course, teacher, room }]
+   teachers: { "Teacher Name": { initials } }
+   ===================================================================== */
+const SCHEDULE_DATA = {
+  "B.Sc. (Hons) Physics": {
+    years: {
+      "First Year": {
+        schedule: [
+          { day:"Mon", start:"08:30", end:"12:30", course:"GE" },
+          { day:"Mon", start:"12:30", end:"14:30", course:"MP-I", teacher:"Dr. Vivek Prajapati", room:"NSB 28" },
+          { day:"Mon", start:"14:30", end:"17:30", course:"CORE" },
+          { day:"Tue", start:"08:30", end:"09:30", course:"CORE" },
+          { day:"Tue", start:"09:30", end:"10:30", course:"Mech", teacher:"Dr. Bharti Rohila", room:"NSB 3" },
+          { day:"Tue", start:"10:30", end:"12:30", course:"Mechanics Lab", teacher:"Dr. Bharti Rohila & New Comer 2", room:"PL1" },
+          { day:"Tue", start:"12:30", end:"14:30", course:"AEC" },
+          { day:"Tue", start:"14:30", end:"16:30", course:"VAC" },
+          { day:"Wed", start:"08:30", end:"12:30", course:"W & O Lab", teacher:"Dr. Parul Yadav & Dr. Mansi Dhingra", room:"PL1" },
+          { day:"Wed", start:"12:30", end:"16:30", course:"GE" },
+          { day:"Thu", start:"08:30", end:"12:30", course:"GE" },
+          { day:"Thu", start:"12:30", end:"14:30", course:"Mech", teacher:"Dr. Bharti Rohila", room:"NSB 28" },
+          { day:"Thu", start:"14:30", end:"16:30", course:"MP-I Lab", teacher:"Dr. Bharti Rohila & Dr. Vivek Prajapati", room:"NSB 7" },
+          { day:"Fri", start:"08:30", end:"09:30", course:"CORE" },
+          { day:"Fri", start:"09:30", end:"11:30", course:"W & O", teacher:"Dr. Mansi Dhingra", room:"PL2" },
+          { day:"Fri", start:"11:30", end:"12:30", course:"MP-I", teacher:"Dr. Rinku Kumar", room:"NSB 28" },
+          { day:"Fri", start:"12:30", end:"13:30", course:"GE" },
+          { day:"Fri", start:"13:30", end:"15:30", course:"CORE" },
+          { day:"Fri", start:"15:30", end:"17:30", course:"VAC" },
+          { day:"Sat", start:"08:30", end:"12:30", course:"SEC" },
+          { day:"Sat", start:"12:30", end:"13:30", course:"CLUSTER" },
+          { day:"Sat", start:"13:30", end:"17:30", course:"AEC" }
+        ],
+        teachers: {
+          "Prof. Shalini Lumb Talwar": { initials:"SL" },
+          "Dr. Mansi Dhingra": { initials:"MD" },
+          "Dr. Bharti Rohila": { initials:"BR" },
+          "Dr. Parul Yadav": { initials:"PY" },
+          "Dr. Rinku Kumar": { initials:"RK" },
+          "Dr. Vivek Prajapati": { initials:"VP" },
+          "New Comer 2": { initials:"NC 2" }
+        }
+      },
+      "Second Year": {
+        schedule: [
+          { day:"Mon", start:"08:30", end:"09:30", course:"CORE" },
+          { day:"Mon", start:"10:30", end:"12:30", course:"DSE NA", teacher:"Dr. Bharti Rohila", room:"NSB 27" },
+          { day:"Mon", start:"12:30", end:"16:30", course:"L & M Lab", teacher:"Prof. Poonam Juneja & Prof. Shalini Lumb Talwar", room:"PL2" },
+          { day:"Mon", start:"16:30", end:"17:30", course:"CORE" },
+          { day:"Tue", start:"08:30", end:"10:30", course:"VAC" },
+          { day:"Tue", start:"10:30", end:"11:30", course:"DE", teacher:"Prof. Ritu Dhingra", room:"NSB 28" },
+          { day:"Tue", start:"11:30", end:"12:30", course:"CORE" },
+          { day:"Tue", start:"12:30", end:"14:30", course:"MP-III Lab", teacher:"Dr. Savvi Mishra & Dr. Vivek Prajapati", room:"Comp Lab 1" },
+          { day:"Tue", start:"14:30", end:"15:30", course:"CORE" },
+          { day:"Tue", start:"15:30", end:"16:30", course:"CORE" },
+          { day:"Tue", start:"16:30", end:"17:30", course:"CORE" },
+          { day:"Wed", start:"08:30", end:"10:30", course:"DE", teacher:"Prof. Ritu Dhingra", room:"NSB 28" },
+          { day:"Wed", start:"10:30", end:"11:30", course:"CORE" },
+          { day:"Wed", start:"11:30", end:"12:30", course:"L & M", teacher:"Prof. Poonam Juneja", room:"NSB 28" },
+          { day:"Wed", start:"12:30", end:"14:30", course:"DSE NA Lab", teacher:"Dr. Bharti Rohila", room:"NSB 7" },
+          { day:"Wed", start:"14:30", end:"15:30", course:"DSE/GE" },
+          { day:"Wed", start:"15:30", end:"16:30", course:"DSE/GE" },
+          { day:"Wed", start:"16:30", end:"17:30", course:"DSE/GE" },
+          { day:"Thu", start:"08:30", end:"10:30", course:"DE Lab", teacher:"Prof. Ritu Dhingra & Dr. Vasudha Agarwal", room:"PL2" },
+          { day:"Thu", start:"10:30", end:"11:30", course:"MP-III", teacher:"Mrs. Polly Biswas", room:"NSB 28" },
+          { day:"Thu", start:"11:30", end:"12:30", course:"L & M", teacher:"Prof. Poonam Juneja", room:"NSB 28" },
+          { day:"Thu", start:"12:30", end:"14:30", course:"DSE NA Lab", teacher:"Dr. Vivek Prajapati", room:"NSB 7" },
+          { day:"Thu", start:"14:30", end:"15:30", course:"DSE/GE" },
+          { day:"Thu", start:"15:30", end:"16:30", course:"DSE/GE" },
+          { day:"Thu", start:"16:30", end:"17:30", course:"DSE/GE" },
+          { day:"Fri", start:"08:30", end:"10:30", course:"AEC" },
+          { day:"Fri", start:"10:30", end:"12:30", course:"MP-III", teacher:"Mrs. Polly Biswas", room:"NSB 27" },
+          { day:"Fri", start:"12:30", end:"13:30", course:"DSE/GE" },
+          { day:"Fri", start:"13:30", end:"15:30", course:"VAC" },
+          { day:"Fri", start:"15:30", end:"17:30", course:"CORE" },
+          { day:"Sat", start:"08:30", end:"12:30", course:"AEC" },
+          { day:"Sat", start:"12:30", end:"13:30", course:"CLUSTER" },
+          { day:"Sat", start:"13:30", end:"17:30", course:"SEC" }
+        ],
+        teachers: {
+          "Prof. Poonam Juneja": { initials:"PJ" },
+          "Prof. Ritu Dhingra": { initials:"RD" },
+          "Prof. Shalini Lumb Talwar": { initials:"SL" },
+          "Mrs. Polly Biswas": { initials:"PB" },
+          "Dr. Savvi Mishra": { initials:"SM" },
+          "Dr. Vivek Prajapati": { initials:"VP" },
+          "Dr. Vasudha Agarwal": { initials:"VA" },
+          "Dr. Bharti Rohila": { initials:"BR" }
+        }
+      },
+      "Third Year": {
+        schedule: [
+          { day:"Mon", start:"08:30", end:"09:30", course:"DE", teacher:"Dr. Vasudha Agarwal", room:"NSB 28" },
+          { day:"Mon", start:"09:30", end:"11:30", course:"QM", teacher:"Dr. Parul Yadav", room:"NSB 28" },
+          { day:"Mon", start:"11:30", end:"12:30", course:"DSE RM", teacher:"Dr. Prajwalit Shikha", room:"NSB 28" },
+          { day:"Mon", start:"12:30", end:"14:30", course:"DSE" },
+          { day:"Mon", start:"14:30", end:"16:30", course:"GE" },
+          { day:"Mon", start:"16:30", end:"17:30", course:"GE" },
+          { day:"Tue", start:"08:30", end:"10:30", course:"CORE" },
+          { day:"Tue", start:"10:30", end:"12:30", course:"QM Lab", teacher:"Dr. Parul Yadav & Dr. Savvi Mishra", room:"NSB 7" },
+          { day:"Tue", start:"12:30", end:"14:30", course:"GE" },
+          { day:"Tue", start:"14:30", end:"16:30", course:"DSE RM", teacher:"Dr. Prajwalit Shikha", room:"NSB 28" },
+          { day:"Tue", start:"16:30", end:"17:30", course:"CORE" },
+          { day:"Wed", start:"08:30", end:"10:30", course:"DE Lab", teacher:"Mrs. Polly Biswas & Dr. Vasudha Agarwal", room:"PL2" },
+          { day:"Wed", start:"10:30", end:"11:30", course:"DE", teacher:"Dr. Vasudha Agarwal", room:"83" },
+          { day:"Wed", start:"11:30", end:"12:30", course:"CORE" },
+          { day:"Wed", start:"12:30", end:"14:30", course:"DSE RM Lab", teacher:"Prof. Poonam Juneja & Dr. Prajwalit Shikha", room:"PL1" },
+          { day:"Wed", start:"14:30", end:"16:30", course:"EMT", teacher:"Mr. Dinesh Kumar", room:"NSB 28" },
+          { day:"Wed", start:"16:30", end:"17:30", course:"DSE" },
+          { day:"Thu", start:"08:30", end:"10:30", course:"GE" },
+          { day:"Thu", start:"10:30", end:"11:30", course:"DE", teacher:"Dr. Vasudha Agarwal", room:"PL2" },
+          { day:"Thu", start:"11:30", end:"12:30", course:"EMT", teacher:"Dr. Parul Yadav", room:"NSB 28" },
+          { day:"Thu", start:"12:30", end:"13:30", course:"QM", teacher:"Dr. Parul Yadav", room:"NSB 28" },
+          { day:"Thu", start:"13:30", end:"15:30", course:"EMT Lab", teacher:"Dr. Parul Yadav & Dr. Savvi Mishra", room:"PL2" },
+          { day:"Thu", start:"15:30", end:"17:30", course:"CORE" },
+          { day:"Fri", start:"08:30", end:"10:30", course:"CORE" },
+          { day:"Fri", start:"10:30", end:"12:30", course:"GE" },
+          { day:"Fri", start:"12:30", end:"13:30", course:"CLUSTER" },
+          { day:"Fri", start:"13:30", end:"17:30", course:"SEC" },
+          { day:"Sat", start:"08:30", end:"10:30", course:"CORE" },
+          { day:"Sat", start:"10:30", end:"12:30", course:"GE" },
+          { day:"Sat", start:"12:30", end:"14:30", course:"GE" },
+          { day:"Sat", start:"14:30", end:"16:30", course:"GE" }
+        ],
+        teachers: {
+          "Prof. Poonam Juneja": { initials:"PJ" },
+          "Mrs. Polly Biswas": { initials:"PB" },
+          "Mr. Dinesh Kumar": { initials:"DK" },
+          "Dr. Prajwalit Shikha": { initials:"PS" },
+          "Dr. Parul Yadav": { initials:"PY" },
+          "Dr. Savvi Mishra": { initials:"SM" },
+          "Dr. Vasudha Agarwal": { initials:"VA" },
+          "New Comer 2": { initials:"NC 2" }
+        }
+      }
+    }
+  },
+  "B.Sc. Physical Science with Chemistry": {
+    years: {
+      "First Year": {
+        schedule: [
+          { day:"Mon", start:"08:30", end:"12:30", course:"GE" },
+          { day:"Mon", start:"12:30", end:"13:30", course:"Phy Mechanics", teacher:"Dr. Rohtash Singh", room:"NSB 27" },
+          { day:"Mon", start:"13:30", end:"17:30", course:"Phy Mechanics Lab", teacher:"Dr. Rohtash Singh & Mrs. Polly Biswas", room:"PL1" },
+          { day:"Tue", start:"08:30", end:"12:30", course:"Chem DSC Lab", teacher:"Dr. Ankita Chaudhary, Mr. Kamal Sharma & Dr. Rajni Johar", room:"Lab 2" },
+          { day:"Tue", start:"12:30", end:"14:30", course:"AEC" },
+          { day:"Tue", start:"14:30", end:"16:30", course:"VAC" },
+          { day:"Wed", start:"08:30", end:"10:30", course:"Topics in Calculus", teacher:"MK", room:"NSB 17" },
+          { day:"Wed", start:"10:30", end:"11:30", course:"Phy Mechanics", teacher:"Dr. Rohtash Singh", room:"NSB 28" },
+          { day:"Wed", start:"11:30", end:"12:30", course:"CHEM DSC", teacher:"Dr. Harish Kumar Chaudhary", room:"59" },
+          { day:"Wed", start:"12:30", end:"16:30", course:"GE" },
+          { day:"Thu", start:"08:30", end:"12:30", course:"GE" },
+          { day:"Thu", start:"12:30", end:"13:30", course:"CHEM DSC", room:"62" },
+          { day:"Thu", start:"13:30", end:"14:30", course:"CORE" },
+          { day:"Thu", start:"15:30", end:"17:30", course:"CORE" },
+          { day:"Fri", start:"08:30", end:"09:30", course:"CORE" },
+          { day:"Fri", start:"09:30", end:"12:30", course:"Topics in Calculus", teacher:"MK", room:"NSB 18" },
+          { day:"Fri", start:"12:30", end:"13:30", course:"GE" },
+          { day:"Fri", start:"13:30", end:"15:30", course:"CORE" },
+          { day:"Fri", start:"15:30", end:"17:30", course:"VAC" },
+          { day:"Sat", start:"08:30", end:"12:30", course:"SEC" },
+          { day:"Sat", start:"12:30", end:"13:30", course:"CLUSTER MOVEMENT" },
+          { day:"Sat", start:"13:30", end:"17:30", course:"AEC" }
+        ],
+        teachers: {
+          "Mrs. Polly Biswas": { initials:"PB" },
+          "Dr. Savvi Mishra": { initials:"SM" },
+          "Dr. Rohtash Singh": { initials:"RS" },
+          "Dr. Pooja Saluja": { initials:"PS" },
+          "Dr. Ankita Chaudhary": { initials:"AC" },
+          "Mr. Kamal Sharma": { initials:"KS" },
+          "Dr. Rajni Johar": { initials:"RJ" },
+          "Mr. Roop Singh Meena": { initials:"RSM" },
+          "Dr. Harish Kumar Chaudhary": { initials:"HKC" },
+          "Name not provided yet (MK)": { initials:"MK" }
+        }
+      },
+      "Second Year": {
+        schedule: [
+          { day:"Mon", start:"08:30", end:"10:30", course:"AEC" },
+          { day:"Mon", start:"10:30", end:"11:30", course:"DSE/GE" },
+          { day:"Mon", start:"11:30", end:"12:30", course:"Phy DSE", teacher:"NC", room:"PL1" },
+          { day:"Mon", start:"12:30", end:"13:30", course:"Maths DE", teacher:"SND", room:"NSB 18" },
+          { day:"Mon", start:"13:30", end:"15:30", course:"Phy H & T", teacher:"RK", room:"NSB 27" },
+          { day:"Mon", start:"15:30", end:"16:30", course:"CORE" },
+          { day:"Mon", start:"16:30", end:"17:30", course:"CORE" },
+          { day:"Tue", start:"08:30", end:"10:30", course:"VAC" },
+          { day:"Tue", start:"10:30", end:"12:30", course:"CHEM DSC", room:"DK 59" },
+          { day:"Tue", start:"12:30", end:"16:30", course:"Phys H & T Lab", teacher:"Prof. Poonam Juneja & Prof. Shalini Lumb Talwar", room:"PL1" },
+          { day:"Tue", start:"16:30", end:"17:30", course:"CORE" },
+          { day:"Wed", start:"08:30", end:"10:30", course:"Maths DE", teacher:"SND", room:"NSB 18" },
+          { day:"Wed", start:"12:30", end:"13:30", course:"Maths DSE" },
+          { day:"Wed", start:"13:30", end:"14:30", course:"DSE/GE" },
+          { day:"Wed", start:"12:30", end:"14:30", course:"Phy DSE Biophysics Lab (parallel option)", teacher:"Dr. Rohtash Singh", room:"PL2/DR" },
+          { day:"Wed", start:"14:30", end:"16:30", course:"CHEM DSE", teacher:"KR", room:"62" },
+          { day:"Wed", start:"16:30", end:"17:30", course:"DSE/GE" },
+          { day:"Thu", start:"08:30", end:"12:30", course:"CHEM DSC Lab", teacher:"RG, Dr. Ankita Chaudhary & GR", room:"Lab 2" },
+          { day:"Thu", start:"12:30", end:"15:30", course:"CHEM DSE", teacher:"Ms. Pamthingla", room:"Lab-1" },
+          { day:"Thu", start:"12:30", end:"14:30", course:"Phy DSE (parallel option)", teacher:"NC", room:"NSB 28" },
+          { day:"Thu", start:"15:30", end:"16:30", course:"DSE/GE" },
+          { day:"Thu", start:"16:30", end:"17:30", course:"DSE/GE" },
+          { day:"Fri", start:"08:30", end:"09:30", course:"CHEM DSC", room:"PS 62" },
+          { day:"Fri", start:"09:30", end:"12:30", course:"CORE" },
+          { day:"Fri", start:"12:30", end:"13:30", course:"Maths DSE" },
+          { day:"Fri", start:"13:30", end:"15:30", course:"VAC" },
+          { day:"Fri", start:"15:30", end:"17:30", course:"Maths DE", teacher:"SND", room:"NSB 18" },
+          { day:"Sat", start:"08:30", end:"12:30", course:"AEC" },
+          { day:"Sat", start:"12:30", end:"13:30", course:"CLUSTER" },
+          { day:"Sat", start:"13:30", end:"17:30", course:"SEC" }
+        ],
+        teachers: {
+          "Prof. Poonam Juneja": { initials:"PJ" },
+          "Prof. Shalini Lumb Talwar": { initials:"SL" },
+          "Dr. Rohtash Singh": { initials:"RS" },
+          "Ms. Pamthingla": { initials:"PT" },
+          "Dr. Ankita Chaudhary": { initials:"AC" },
+          "Name not provided yet (NC)": { initials:"NC" },
+          "Name not provided yet (RK)": { initials:"RK" },
+          "Name not provided yet (RG)": { initials:"RG" },
+          "Name not provided yet (GR)": { initials:"GR" },
+          "Name not provided yet (KR)": { initials:"KR" },
+          "Name not provided yet (SND)": { initials:"SND" }
+        }
+      },
+      "Third Year": {
+        schedule: [
+          { day:"Mon", start:"09:30", end:"11:30", course:"Phy DSE DE", teacher:"Dr. Vasudha Agarwal", room:"NSB 27" },
+          { day:"Mon", start:"11:30", end:"12:30", course:"Phy EMP Lab", teacher:"Dr. Savvi Mishra", room:"PL2" },
+          { day:"Mon", start:"12:30", end:"13:30", course:"CHEM DSE", teacher:"Ms. Pamthingla", room:"59" },
+          { day:"Mon", start:"13:30", end:"14:30", course:"CHEM DSE", teacher:"Ms. Pamthingla", room:"61" },
+          { day:"Mon", start:"12:30", end:"14:30", course:"Phy DSE DE Lab (parallel option)", teacher:"Dr. Prajwalit Shikha", room:"PL2" },
+          { day:"Mon", start:"14:30", end:"17:30", course:"GE" },
+          { day:"Tue", start:"08:30", end:"12:30", course:"Chem DSC Lab", teacher:"Dr. Hema Bhandari, Dr. Lata Vodwal & Dr. Pratibha Chaudhary", room:"Lab 3" },
+          { day:"Tue", start:"12:30", end:"14:30", course:"GE" },
+          { day:"Tue", start:"14:30", end:"16:30", course:"Phy DSE DE", teacher:"Mr. Dinesh Kumar", room:"DR/PL2" },
+          { day:"Tue", start:"16:30", end:"17:30", course:"CORE" },
+          { day:"Wed", start:"08:30", end:"10:30", course:"Maths DSC" },
+          { day:"Wed", start:"12:30", end:"13:30", course:"Maths DSE" },
+          { day:"Wed", start:"12:30", end:"14:30", course:"Phy DSE DE Lab (parallel option)", teacher:"Mr. Dinesh Kumar", room:"PL2" },
+          { day:"Wed", start:"13:30", end:"14:30", course:"Maths DSE" },
+          { day:"Wed", start:"14:30", end:"16:30", course:"CHEM DSE", teacher:"Ms. Pamthingla", room:"Lab-2" },
+          { day:"Thu", start:"08:30", end:"10:30", course:"GE" },
+          { day:"Thu", start:"10:30", end:"11:30", course:"Phy EMP", teacher:"Prof. Shalini Lumb Talwar", room:"NSB 27" },
+          { day:"Thu", start:"11:30", end:"12:30", course:"Phy EMP Lab", teacher:"Prof. Shalini Lumb Talwar", room:"PL2" },
+          { day:"Thu", start:"13:30", end:"15:30", course:"CHEM DSC", teacher:"Dr. Praveen", room:"59" },
+          { day:"Thu", start:"15:30", end:"16:30", course:"CORE" },
+          { day:"Fri", start:"08:30", end:"10:30", course:"CORE" },
+          { day:"Fri", start:"10:30", end:"12:30", course:"GE" },
+          { day:"Fri", start:"12:30", end:"13:30", course:"Phy EMP", teacher:"Dr. Prajwalit Shikha", room:"NSB 28" },
+          { day:"Fri", start:"13:30", end:"17:30", course:"SEC" },
+          { day:"Sat", start:"08:30", end:"10:30", course:"Maths DSC" },
+          { day:"Sat", start:"10:30", end:"12:30", course:"Maths DSE" },
+          { day:"Sat", start:"12:30", end:"14:30", course:"GE" },
+          { day:"Sat", start:"14:30", end:"16:30", course:"GE" }
+        ],
+        teachers: {
+          "Prof. Shalini Lumb Talwar": { initials:"SL" },
+          "Mrs. Polly Biswas": { initials:"PB" },
+          "Mr. Dinesh Kumar": { initials:"DK" },
+          "Dr. Prajwalit Shikha": { initials:"PS" },
+          "Dr. Vasudha Agarwal": { initials:"VA" },
+          "Dr. Savvi Mishra": { initials:"SM" },
+          "Dr. Hema Bhandari": { initials:"HB" },
+          "Dr. Lata Vodwal": { initials:"LV" },
+          "Dr. Pratibha Chaudhary": { initials:"PC" },
+          "Dr. Praveen": { initials:"PG" },
+          "Ms. Pamthingla": { initials:"PT" }
+        }
+      }
+    }
+  },
+  "B.A. Economics Honours": {
+    years: {
+      "First Year": {
+        schedule: [
+          { day:"Mon", start:"08:30", end:"12:30", course:"GE" },
+          { day:"Mon", start:"12:30", end:"13:30", course:"Statistics", teacher:"Dr. Nupur Kataria", room:"9" },
+          { day:"Mon", start:"13:30", end:"16:30", course:"Statistics Tutorial", teacher:"Dr. Nupur Kataria" },
+          { day:"Tue", start:"09:30", end:"11:30", course:"Introductory Microeconomics", teacher:"Mrs. Nidhi Chand", room:"NSB 2" },
+          { day:"Tue", start:"11:30", end:"12:30", course:"Introductory Mathematical Methods", teacher:"Mr. Neeraj", room:"NSB 2" },
+          { day:"Tue", start:"12:30", end:"14:30", course:"AEC" },
+          { day:"Tue", start:"14:30", end:"16:30", course:"VAC" },
+          { day:"Wed", start:"08:30", end:"09:30", course:"Statistics", teacher:"Dr. Nupur Kataria", room:"9" },
+          { day:"Wed", start:"10:30", end:"12:30", course:"Introductory Microeconomics", teacher:"Mrs. Nidhi Chand", room:"NSB 2" },
+          { day:"Wed", start:"11:30", end:"12:30", course:"Introductory Microeconomics Tutorial (parallel option)", teacher:"Mrs. Nidhi Chand" },
+          { day:"Wed", start:"11:30", end:"12:30", course:"Statistics Tutorial (parallel option)", teacher:"Dr. Nupur Kataria" },
+          { day:"Wed", start:"12:30", end:"15:30", course:"GE" },
+          { day:"Thu", start:"08:30", end:"12:30", course:"GE" },
+          { day:"Thu", start:"12:30", end:"13:30", course:"Introductory Mathematical Methods", teacher:"Mr. Neeraj", room:"9" },
+          { day:"Thu", start:"13:30", end:"14:30", course:"Introductory Mathematical Methods Tutorial", teacher:"Mr. Neeraj", room:"9" },
+          { day:"Fri", start:"11:30", end:"12:30", course:"Statistics Tutorial", teacher:"Dr. Nupur Kataria" },
+          { day:"Fri", start:"12:30", end:"13:30", course:"GE" },
+          { day:"Fri", start:"13:30", end:"14:30", course:"Introductory Mathematical Methods", teacher:"Mr. Neeraj", room:"9" },
+          { day:"Fri", start:"14:30", end:"15:30", course:"Statistics", teacher:"Dr. Nupur Kataria", room:"10" },
+          { day:"Fri", start:"15:30", end:"17:30", course:"VAC" },
+          { day:"Sat", start:"08:30", end:"12:30", course:"SEC" },
+          { day:"Sat", start:"12:30", end:"13:30", course:"CLUSTER MOVEMENT" },
+          { day:"Sat", start:"13:30", end:"14:30", course:"AEC (parallel option)" },
+          { day:"Sat", start:"13:30", end:"14:30", course:"IMTUT (parallel option)", room:"NACLR1" },
+          { day:"Sat", start:"14:30", end:"17:30", course:"AEC" }
+        ],
+        teachers: {
+          "Mrs. Nidhi Chand": { initials:"NC" },
+          "Mr. Neeraj": { initials:"Neeraj" },
+          "Dr. Nupur Kataria": { initials:"Nupur Kataria" }
+        }
+      },
+      "Second Year": {
+        schedule: [
+          { day:"Mon", start:"08:30", end:"10:30", course:"AEC" },
+          { day:"Mon", start:"10:30", end:"12:30", course:"DSE/GE" },
+          { day:"Mon", start:"12:30", end:"15:30", course:"Advanced Maths Methods (+ Tutorial)", teacher:"Mr. Arun Kumar", room:"NACLR2" },
+          { day:"Tue", start:"08:30", end:"10:30", course:"VAC" },
+          { day:"Tue", start:"10:30", end:"11:30", course:"Macroeconomics", teacher:"Mrs. Rachna Jain", room:"10" },
+          { day:"Tue", start:"11:30", end:"12:30", course:"Macroeconomics Tutorial (parallel option)", teacher:"Mrs. Rachna Jain", room:"10" },
+          { day:"Tue", start:"11:30", end:"12:30", course:"Microeconomics Tutorial (parallel option)", teacher:"Mrs. Antima Jain" },
+          { day:"Tue", start:"12:30", end:"13:30", course:"Microeconomics", teacher:"Mrs. Antima Jain", room:"9" },
+          { day:"Tue", start:"13:30", end:"17:30", course:"Advanced Maths Methods Tutorial", teacher:"Mr. Arun Kumar" },
+          { day:"Wed", start:"09:30", end:"10:30", course:"Microeconomics", teacher:"Mrs. Antima Jain", room:"NACLR1" },
+          { day:"Wed", start:"10:30", end:"11:30", course:"Macroeconomics", teacher:"Mrs. Rachna Jain", room:"10" },
+          { day:"Wed", start:"11:30", end:"12:30", course:"Advanced Maths Methods", teacher:"Mr. Arun Kumar", room:"9" },
+          { day:"Wed", start:"12:30", end:"16:30", course:"DSE/GE" },
+          { day:"Thu", start:"09:30", end:"10:30", course:"Microeconomics Tutorial (parallel option)", teacher:"Mrs. Antima Jain" },
+          { day:"Thu", start:"09:30", end:"10:30", course:"Macroeconomics Tutorial (parallel option)", teacher:"Mrs. Rachna Jain" },
+          { day:"Thu", start:"10:30", end:"11:30", course:"Advanced Maths Methods Tutorial", teacher:"Mr. Arun Kumar" },
+          { day:"Thu", start:"11:30", end:"12:30", course:"Advanced Maths Methods", teacher:"Mr. Arun Kumar", room:"12" },
+          { day:"Thu", start:"12:30", end:"16:30", course:"DSE/GE" },
+          { day:"Fri", start:"09:30", end:"10:30", course:"Macroeconomics Tutorial (parallel option)", teacher:"Mrs. Rachna Jain" },
+          { day:"Fri", start:"09:30", end:"10:30", course:"Microeconomics Tutorial (parallel option)", teacher:"Mrs. Antima Jain" },
+          { day:"Fri", start:"10:30", end:"11:30", course:"Macroeconomics", teacher:"Mrs. Rachna Jain", room:"10" },
+          { day:"Fri", start:"11:30", end:"12:30", course:"Microeconomics", teacher:"Mrs. Antima Jain", room:"10" },
+          { day:"Fri", start:"12:30", end:"13:30", course:"DSE/GE" },
+          { day:"Fri", start:"13:30", end:"15:30", course:"VAC" },
+          { day:"Fri", start:"15:30", end:"17:30", course:"AEC" },
+          { day:"Sat", start:"08:30", end:"12:30", course:"AEC" },
+          { day:"Sat", start:"12:30", end:"13:30", course:"CLUSTER MOVEMENT" },
+          { day:"Sat", start:"13:30", end:"17:30", course:"SEC" }
+        ],
+        teachers: {
+          "Mrs. Antima Jain": { initials:"AJ" },
+          "Mrs. Rachna Jain": { initials:"RJ" },
+          "Mr. Arun Kumar": { initials:"Arun Kumar" }
+        }
+      },
+      "Third Year": {
+        schedule: [
+          { day:"Mon", start:"10:30", end:"11:30", course:"Introductory Development Economics", teacher:"Mrs. Aruna Saluja", room:"9" },
+          { day:"Mon", start:"11:30", end:"12:30", course:"Research Methodology", teacher:"Prof. Saroj Rani", room:"NSB 2" },
+          { day:"Mon", start:"12:30", end:"13:30", course:"Game Theory Tutorial (parallel option)" },
+          { day:"Mon", start:"12:30", end:"13:30", course:"Introductory Development Economics Tutorial (parallel option)", teacher:"Mrs. Aruna Saluja" },
+          { day:"Mon", start:"14:30", end:"17:30", course:"GE" },
+          { day:"Tue", start:"08:30", end:"09:30", course:"Game Theory Tutorial", room:"10" },
+          { day:"Tue", start:"09:30", end:"10:30", course:"Game Theory", room:"10" },
+          { day:"Tue", start:"10:30", end:"11:30", course:"Introductory Development Economics", teacher:"Mrs. Aruna Saluja", room:"9" },
+          { day:"Tue", start:"11:30", end:"12:30", course:"Research Methodology", teacher:"Prof. Saroj Rani", room:"9" },
+          { day:"Tue", start:"12:30", end:"14:30", course:"GE" },
+          { day:"Wed", start:"08:30", end:"09:30", course:"Research Methodology Tutorial", teacher:"Prof. Saroj Rani" },
+          { day:"Wed", start:"09:30", end:"10:30", course:"Introductory Development Economics Tutorial", teacher:"Mrs. Aruna Saluja" },
+          { day:"Wed", start:"10:30", end:"11:30", course:"Research Methodology", teacher:"Prof. Saroj Rani", room:"NACLR1" },
+          { day:"Wed", start:"11:30", end:"12:30", course:"Research Methodology Tutorial", teacher:"Prof. Saroj Rani", room:"NACLR1" },
+          { day:"Wed", start:"12:30", end:"14:30", course:"Economic Growth & Business Cycles", teacher:"Sakshi", room:"9" },
+          { day:"Thu", start:"08:30", end:"10:30", course:"GE" },
+          { day:"Thu", start:"10:30", end:"11:30", course:"Introductory Development Economics", teacher:"Mrs. Aruna Saluja", room:"9" },
+          { day:"Thu", start:"11:30", end:"12:30", course:"Introductory Development Economics Tutorial", teacher:"Mrs. Aruna Saluja", room:"9" },
+          { day:"Thu", start:"12:30", end:"13:30", course:"Game Theory", teacher:"Dr. Aastha Arora", room:"10" },
+          { day:"Thu", start:"13:30", end:"14:30", course:"Economic Growth & Business Cycles", teacher:"Sakshi", room:"NSB 2" },
+          { day:"Thu", start:"14:30", end:"15:30", course:"Economic Growth & Business Cycles Tutorial", teacher:"Sakshi", room:"NSB 2" },
+          { day:"Fri", start:"08:30", end:"09:30", course:"Research Methodology Tutorial", teacher:"Prof. Saroj Rani" },
+          { day:"Fri", start:"09:30", end:"10:30", course:"Game Theory", room:"9" },
+          { day:"Fri", start:"10:30", end:"12:30", course:"GE" },
+          { day:"Fri", start:"12:30", end:"13:30", course:"Game Theory Tutorial" },
+          { day:"Fri", start:"13:30", end:"17:30", course:"SEC" },
+          { day:"Sat", start:"08:30", end:"11:30", course:"CORE" },
+          { day:"Sat", start:"12:30", end:"16:30", course:"GE" }
+        ],
+        teachers: {
+          "Dr. Aastha Arora": { initials:"AA / GT" },
+          "Sakshi": { initials:"EGBC" },
+          "Mrs. Aruna Saluja": { initials:"AS / IDE" },
+          "Prof. Saroj Rani": { initials:"RM / DSE-RM" }
+        }
+      }
+    }
+  },
+  "B.A. English Honours": {
+    years: {
+      "First Year": {
+        schedule: [
+          { day:"Mon", start:"12:30", end:"13:30", course:"ILS Tutorial", teacher:"Ms. Pooja" },
+          { day:"Mon", start:"14:30", end:"15:30", course:"ECL", teacher:"Mr. Aditya" },
+          { day:"Mon", start:"15:30", end:"16:30", course:"ECL Tutorial", teacher:"Mr. Aditya", room:"8" },
+          { day:"Tue", start:"08:30", end:"09:30", course:"ECL", teacher:"Mr. Aditya", room:"72" },
+          { day:"Tue", start:"09:30", end:"10:30", course:"ECL Tutorial", teacher:"Mr. Aditya" },
+          { day:"Tue", start:"10:30", end:"11:30", course:"ILS & ICL Tutorial", teacher:"Prof. Smriti & Ms. Pooja", room:"8" },
+          { day:"Wed", start:"08:30", end:"09:30", course:"ECL", teacher:"Mr. Aditya", room:"72" },
+          { day:"Wed", start:"09:30", end:"10:30", course:"ILS", teacher:"Ms. Pooja", room:"8" },
+          { day:"Wed", start:"10:30", end:"11:30", course:"ICL", teacher:"Prof. Smriti", room:"8" },
+          { day:"Wed", start:"11:30", end:"12:30", course:"ICL Tutorial", teacher:"Prof. Smriti", room:"8" },
+          { day:"Thu", start:"08:30", end:"09:30", course:"ICL", teacher:"Prof. Smriti", room:"8" },
+          { day:"Thu", start:"10:30", end:"11:30", course:"ILS Tutorial", teacher:"Ms. Nupur" },
+          { day:"Thu", start:"11:30", end:"12:30", course:"ILS", teacher:"Ms. Nupur", room:"13" },
+          { day:"Fri", start:"08:30", end:"09:30", course:"ICL", teacher:"Prof. Smriti", room:"8" },
+          { day:"Fri", start:"09:30", end:"10:30", course:"ICL & ILS Tutorial", teacher:"Prof. Smriti & Ms. Pooja", room:"8" },
+          { day:"Fri", start:"10:30", end:"11:30", course:"ILS", teacher:"Ms. Pooja", room:"8" },
+          { day:"Fri", start:"11:30", end:"12:30", course:"ECL Tutorial", teacher:"Mr. Aditya" }
+        ],
+        teachers: {
+          "Mr. Aditya": { initials:"ECL" },
+          "Ms. Pooja": { initials:"ILS" },
+          "Prof. Smriti": { initials:"ICL" },
+          "Ms. Nupur": { initials:"ILS" }
+        }
+      },
+      "Second Year": {
+        schedule: [
+          { day:"Mon", start:"10:30", end:"11:30", course:"Romantic Literature", teacher:"Ms. Manisha", room:"13" },
+          { day:"Mon", start:"11:30", end:"12:30", course:"Literary Criticism", teacher:"Ms. Ruchi", room:"8" },
+          { day:"Mon", start:"12:30", end:"13:30", course:"Literary Criticism Tutorial", teacher:"Ms. Ruchi" },
+          { day:"Mon", start:"13:30", end:"14:30", course:"Victorian Literature", teacher:"Ms. Rachna", room:"13" },
+          { day:"Mon", start:"14:30", end:"15:30", course:"Victorian Literature Tutorial", teacher:"Ms. Rachna" },
+          { day:"Tue", start:"08:30", end:"09:30", course:"Victorian Literature (Unit 3)", teacher:"Ms. Pooja" },
+          { day:"Tue", start:"10:30", end:"11:30", course:"Romantic Literature", teacher:"Ms. Manisha", room:"72" },
+          { day:"Tue", start:"11:30", end:"12:30", course:"Romantic Literature Tutorial", teacher:"Ms. Manisha" },
+          { day:"Tue", start:"12:30", end:"13:30", course:"Literary Criticism", teacher:"Ms. Ruchi", room:"8" },
+          { day:"Tue", start:"13:30", end:"14:30", course:"Literary Criticism Tutorial", teacher:"Ms. Ruchi" },
+          { day:"Wed", start:"09:30", end:"10:30", course:"Romantic Literature Tutorial", teacher:"Ms. Manisha" },
+          { day:"Wed", start:"10:30", end:"11:30", course:"Romantic Literature", teacher:"Ms. Manisha", room:"72" },
+          { day:"Wed", start:"11:30", end:"12:30", course:"Literary Criticism" },
+          { day:"Wed", start:"13:30", end:"14:30", course:"Literary Criticism", teacher:"Ms. Ruchi", room:"8" },
+          { day:"Thu", start:"10:30", end:"11:30", course:"Victorian Literature", teacher:"Ms. Rachna" },
+          { day:"Thu", start:"11:30", end:"12:30", course:"Victorian Literature Tutorial", teacher:"Ms. Rachna", room:"13" },
+          { day:"Fri", start:"09:30", end:"10:30", course:"Romantic Literature Tutorial (parallel option)", teacher:"Ms. Manisha" },
+          { day:"Fri", start:"09:30", end:"10:30", course:"Literary Criticism (parallel option)", teacher:"Ms. Ruchi" }
+        ],
+        teachers: {
+          "Ms. Manisha": { initials:"Romantic Lit" },
+          "Ms. Ruchi": { initials:"Lit Criticism" },
+          "Ms. Rachna": { initials:"Victorian Lit" },
+          "Ms. Pooja": { initials:"guest slot" }
+        }
+      },
+      "Third Year": {
+        schedule: [
+          { day:"Mon", start:"10:30", end:"11:30", course:"Dalit Writings", teacher:"Ms. Rachna", room:"8" },
+          { day:"Mon", start:"11:30", end:"12:30", course:"Dalit Writings Tutorial", teacher:"Ms. Rachna", room:"13" },
+          { day:"Tue", start:"08:30", end:"09:30", course:"20th Century Novel", teacher:"Ms. Tianla", room:"13" },
+          { day:"Tue", start:"09:30", end:"10:30", course:"20th Century Poetry & Drama", teacher:"Ms. Tianla", room:"13" },
+          { day:"Tue", start:"10:30", end:"11:30", course:"20th Century Poetry & Drama Tutorial", teacher:"Ms. Tianla", room:"13" },
+          { day:"Tue", start:"10:30", end:"11:30", course:"Dalit Writings Tutorial (parallel option)", teacher:"Ms. Rachna", room:"8" },
+          { day:"Tue", start:"11:30", end:"12:30", course:"Dalit Writings", teacher:"Ms. Rachna", room:"72" },
+          { day:"Wed", start:"10:30", end:"11:30", course:"20th Century Novel Tutorial", teacher:"Ms. Tianla" },
+          { day:"Wed", start:"11:30", end:"12:30", course:"20th Century Novel", teacher:"Ms. Tianla", room:"13" },
+          { day:"Wed", start:"12:30", end:"13:30", course:"20th Century Poetry & Drama Tutorial", teacher:"Ms. Tianla" },
+          { day:"Thu", start:"10:30", end:"11:30", course:"20th Century Novel Tutorial", teacher:"Ms. Tianla" },
+          { day:"Thu", start:"11:30", end:"12:30", course:"20th Century Novel", teacher:"Ms. Tianla", room:"13" },
+          { day:"Thu", start:"12:30", end:"13:30", course:"20th Century Poetry & Drama", teacher:"Ms. Tianla" },
+          { day:"Thu", start:"13:30", end:"14:30", course:"20th Century Poetry & Drama Tutorial", teacher:"Ms. Tianla" },
+          { day:"Fri", start:"08:30", end:"10:30", course:"20th Century Novel Tutorial", teacher:"Ms. Sweta", room:"72" },
+          { day:"Fri", start:"10:30", end:"11:30", course:"Dalit Writings Tutorial", teacher:"Ms. Rachna" },
+          { day:"Fri", start:"11:30", end:"12:30", course:"Dalit Writings", teacher:"Ms. Rachna", room:"13" },
+          { day:"Fri", start:"12:30", end:"13:30", course:"20th Century Poetry & Drama", teacher:"Ms. Tianla" },
+          { day:"Fri", start:"13:30", end:"14:30", course:"20th Century Poetry & Drama Tutorial", teacher:"Ms. Ruchi", room:"13" }
+        ],
+        teachers: {
+          "Ms. Rachna": { initials:"Dalit Writings" },
+          "Ms. Tianla": { initials:"20th Century" },
+          "Ms. Sweta": { initials:"20th C. Novel Tut" },
+          "Ms. Ruchi": { initials:"Poetry & Drama Tut" }
+        }
+      }
+    }
+  }
+};
+
+const ABBREV_LEGEND = {
+  "CORE": "Core Course",
+  "DSE": "Discipline Specific Elective",
+  "DSE/GE": "Discipline Specific / Generic Elective",
+  "GE": "Generic Elective",
+  "AEC": "Ability Enhancement Course",
+  "SEC": "Skill Enhancement Course",
+  "VAC": "Value Addition Course",
+  "MP-I / MP-III": "Mathematical Physics I / III",
+  "QM": "Quantum Mechanics",
+  "EMT": "Electromagnetic Theory",
+  "L & M": "L & M paper (see department for full title)",
+  "W & O": "Waves & Optics",
+  "CLUSTER": "Cluster elective slot",
+  "IDE": "Introductory Development Economics",
+  "EGBC": "Economic Growth and Business Cycles",
+  "RM": "Research Methodology",
+  "MME": "Introductory Mathematical Methods for Economics",
+  "IMICRO": "Introductory Microeconomics",
+  "ECL / ICL / ILS": "English course codes (full titles not on the sheet — check with department)"
+};
+
+const DAY_ORDER = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const DAY_FULL = {Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
+const YEAR_ORDER = ["First Year","Second Year","Third Year"];
+
+let selectedProgram = null;
+let selectedYear = null;
+let dayFilter = 'ALL'; // 'ALL' or a DAY_ORDER code — drives the day-chip filter
+
+// --- Theme toggle (in-memory only; no storage, so it resets on reload) ---
+const themeToggle = document.getElementById('themeToggle');
+const themeLabel = document.getElementById('themeLabel');
+themeToggle.addEventListener('click', ()=>{
+  const isDark = document.body.classList.toggle('dark');
+  themeLabel.textContent = isDark ? 'Dark' : 'Light';
+});
+
+const programInput = document.getElementById('programInput');
+const programList = document.getElementById('programList');
+const programNextBtn = document.getElementById('programNextBtn');
+
+function renderProgramList(filter){
+  const names = Object.keys(SCHEDULE_DATA).filter(n => !filter || n.toLowerCase().includes(filter.toLowerCase()));
+  programList.innerHTML = '';
+  names.forEach(name=>{
+    const yrCount = Object.keys(SCHEDULE_DATA[name].years).length;
+    const row = document.createElement('div');
+    row.className = 'program-opt';
+    row.innerHTML = `<span>${name}</span><span class="count">${yrCount} years available</span>`;
+    row.onclick = ()=>{ selectedProgram = name; goToYearStep(); };
+    programList.appendChild(row);
+  });
+  if(names.length===0){
+    programList.innerHTML = '<div class="empty-note">No matching programme yet.</div>';
+  }
+}
+renderProgramList('');
+
+programInput.addEventListener('input', ()=>{
+  const val = programInput.value.trim();
+  programNextBtn.disabled = !SCHEDULE_DATA[val];
+  renderProgramList(val);
+});
+
+programNextBtn.addEventListener('click', ()=>{
+  const val = programInput.value.trim();
+  if(SCHEDULE_DATA[val]){
+    selectedProgram = val;
+    goToYearStep();
+  }
+});
+
+function goToYearStep(){
+  document.getElementById('onboarding').style.display='none';
+  document.getElementById('yearStep').style.display='block';
+  document.getElementById('yearLead').textContent = `You picked ${selectedProgram}. Now select your current year.`;
+  selectedYear = null;
+  document.getElementById('viewTimetableBtn').disabled = true;
+
+  const grid = document.getElementById('yearGrid');
+  grid.innerHTML = '';
+  const years = Object.keys(SCHEDULE_DATA[selectedProgram].years);
+  YEAR_ORDER.filter(y=>years.includes(y)).forEach(year=>{
+    const opt = document.createElement('div');
+    opt.className='year-opt';
+    opt.innerHTML = `<span>${year}</span><span class="check">✓</span>`;
+    opt.onclick = ()=>{
+      selectedYear = year;
+      document.querySelectorAll('.year-opt').forEach(el=>el.classList.remove('selected'));
+      opt.classList.add('selected');
+      document.getElementById('viewTimetableBtn').disabled = false;
+    };
+    grid.appendChild(opt);
+  });
+}
+
+document.getElementById('backToProgram').addEventListener('click', ()=>{
+  document.getElementById('yearStep').style.display='none';
+  document.getElementById('onboarding').style.display='block';
+  programInput.value = '';
+  renderProgramList('');
+  programNextBtn.disabled = true;
+});
+
+document.getElementById('viewTimetableBtn').addEventListener('click', ()=>{
+  if(selectedProgram && selectedYear) enterDashboard();
+});
+
+document.getElementById('changeProgram').addEventListener('click', ()=>{
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('onboarding').style.display='block';
+  document.getElementById('yearStep').style.display='none';
+  programInput.value = '';
+  renderProgramList('');
+  programNextBtn.disabled = true;
+  clearInterval(window._liveTimer);
+});
+
+function currentData(){
+  return SCHEDULE_DATA[selectedProgram].years[selectedYear];
+}
+
+function enterDashboard(){
+  document.getElementById('yearStep').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('programTitle').textContent = selectedProgram;
+  document.getElementById('yearSub').textContent = selectedYear;
+  dayFilter = 'ALL';
+  renderDayChips();
+  renderTimetable();
+  renderTeachers();
+  updateStatus();
+  window._liveTimer = setInterval(updateStatus, 1000);
+}
+
+document.getElementById('tabTimetable').addEventListener('click', ()=> switchTab('timetable'));
+document.getElementById('tabTeachers').addEventListener('click', ()=> switchTab('teachers'));
+
+function switchTab(tab){
+  document.getElementById('tabTimetable').classList.toggle('active', tab==='timetable');
+  document.getElementById('tabTeachers').classList.toggle('active', tab==='teachers');
+  document.getElementById('timetableView').style.display = tab==='timetable' ? 'block':'none';
+  document.getElementById('teachersView').style.display = tab==='teachers' ? 'block':'none';
+  document.getElementById('dayChips').style.display = tab==='timetable' ? 'flex':'none';
+}
+
+function toMinutes(hhmm){ const [h,m] = hhmm.split(':').map(Number); return h*60+m; }
+
+function nowInfo(){
+  const now = new Date();
+  const jsDay = now.getDay();
+  const dayCode = DAY_ORDER[(jsDay+6)%7];
+  const minutes = now.getHours()*60 + now.getMinutes();
+  return { now, dayCode, minutes };
+}
+
+// Clickable day chips: "All" plus one per day that actually has classes.
+// Clicking a chip filters the timetable list below to just that day.
+function renderDayChips(){
+  const data = currentData();
+  const { dayCode } = nowInfo();
+  const daysWithClasses = DAY_ORDER.filter(d => data.schedule.some(e=>e.day===d));
+  const chips = document.getElementById('dayChips');
+  chips.innerHTML = '';
+
+  const allChip = document.createElement('div');
+  allChip.className = 'day-chip' + (dayFilter==='ALL' ? ' active' : '');
+  allChip.textContent = 'All days';
+  allChip.onclick = ()=>{ dayFilter='ALL'; renderDayChips(); renderTimetable(); };
+  chips.appendChild(allChip);
+
+  daysWithClasses.forEach(day=>{
+    const chip = document.createElement('div');
+    chip.className = 'day-chip' + (dayFilter===day ? ' active' : '');
+    chip.innerHTML = DAY_FULL[day].slice(0,3) + (day===dayCode ? '<span class="chip-dot"></span>' : '');
+    chip.onclick = ()=>{ dayFilter=day; renderDayChips(); renderTimetable(); };
+    chips.appendChild(chip);
+  });
+}
+
+function renderTimetable(){
+  const data = currentData();
+  const container = document.getElementById('timetableView');
+  container.innerHTML = '';
+  const { dayCode } = nowInfo();
+  const daysToShow = dayFilter==='ALL' ? DAY_ORDER : [dayFilter];
+
+  daysToShow.forEach(day=>{
+    const entries = data.schedule.filter(e=>e.day===day).sort((a,b)=>toMinutes(a.start)-toMinutes(b.start));
+    if(entries.length===0) return;
+    const block = document.createElement('div');
+    block.className='day-block';
+    const heading = document.createElement('div');
+    heading.className='day-heading';
+    heading.innerHTML = DAY_FULL[day] + (day===dayCode ? ' <span class="today-badge">TODAY</span>' : '');
+    block.appendChild(heading);
+
+    entries.forEach(e=>{
+      const row = document.createElement('div');
+      row.className='class-row';
+      row.dataset.day = day;
+      row.dataset.start = e.start;
+      row.dataset.end = e.end;
+      const metaParts = [e.teacher, e.room].filter(Boolean);
+      const meta = metaParts.length ? `<div class="class-meta">${metaParts.join(' · ')}</div>` : '';
+      row.innerHTML = `
+        <div class="class-time">${e.start}<br>${e.end}</div>
+        <div>
+          <div class="class-name">${e.course}<span class="live-tag" style="display:none;">NOW</span></div>
+          ${meta}
+        </div>`;
+      block.appendChild(row);
+    });
+    container.appendChild(block);
+  });
+
+  markLiveRows();
+}
+
+function markLiveRows(){
+  const { dayCode, minutes } = nowInfo();
+  document.querySelectorAll('.class-row').forEach(row=>{
+    const isLive = row.dataset.day===dayCode && minutes>=toMinutes(row.dataset.start) && minutes<toMinutes(row.dataset.end);
+    row.classList.toggle('now-live', isLive);
+    const tag = row.querySelector('.live-tag');
+    if(tag) tag.style.display = isLive ? 'inline-block':'none';
+  });
+}
+
+function renderTeachers(){
+  const data = currentData();
+  const container = document.getElementById('teachersView');
+  container.innerHTML='';
+  const names = Object.keys(data.teachers);
+  if(names.length===0){
+    container.innerHTML = '<div class="empty-note">No teacher details on file yet.</div>';
+    return;
+  }
+  names.forEach(name=>{
+    const t = data.teachers[name];
+    const card = document.createElement('div');
+    card.className='teacher-card';
+    card.innerHTML = `
+      <div class="teacher-name">${name}</div>
+      <div class="teacher-row"><b>Abbreviation</b><span>${t.initials||'—'}</span></div>
+    `;
+    container.appendChild(card);
+  });
+
+  const legendKeys = Object.keys(ABBREV_LEGEND);
+  if(legendKeys.length){
+    const legend = document.createElement('div');
+    legend.className='teacher-card';
+    legend.innerHTML = `<div class="teacher-name" style="font-size:14px;">Abbreviation key</div>` +
+      legendKeys.map(k=>`<div class="teacher-row"><b>${k}</b><span>${ABBREV_LEGEND[k]}</span></div>`).join('');
+    container.appendChild(legend);
+  }
+}
+
+function fmtClock(d){ return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
+
+function updateStatus(){
+  const data = currentData();
+  const { now, dayCode, minutes } = nowInfo();
+  document.getElementById('clockDisplay').textContent = fmtClock(now);
+  document.getElementById('statusClock').textContent = DAY_FULL[dayCode] + ' · ' + fmtClock(now);
+
+  const todays = data.schedule.filter(e=>e.day===dayCode).sort((a,b)=>toMinutes(a.start)-toMinutes(b.start));
+  const live = todays.find(e=>minutes>=toMinutes(e.start) && minutes<toMinutes(e.end));
+  const next = todays.find(e=>toMinutes(e.start) > minutes);
+
+  const banner = document.getElementById('statusBanner');
+  const eyebrow = document.getElementById('statusEyebrow');
+  const dot = document.getElementById('statusDot');
+  const main = document.getElementById('statusMain');
+  const detail = document.getElementById('statusDetail');
+  const progressTrack = document.getElementById('progressTrack');
+  const progressFill = document.getElementById('progressFill');
+
+  if(live){
+    banner.classList.add('live');
+    dot.style.display='inline-block';
+    eyebrow.textContent = 'CLASS IN SESSION';
+    main.textContent = live.course;
+    const startMin = toMinutes(live.start), endMin = toMinutes(live.end);
+    const remaining = endMin - minutes;
+    const remainingLabel = remaining <= 1 ? 'ending now' : `ends in ${remaining} min`;
+    const bits = [];
+    if(live.teacher) bits.push(`with <b>${live.teacher}</b>`);
+    if(live.room) bits.push(`in <b>${live.room}</b>`);
+    bits.push(`<b>${remainingLabel}</b> (${live.end})`);
+    detail.innerHTML = bits.join(' · ');
+
+    const pct = Math.min(100, Math.max(0, ((minutes - startMin) / (endMin - startMin)) * 100));
+    progressTrack.style.display = 'block';
+    progressFill.style.width = pct + '%';
+  } else {
+    banner.classList.remove('live');
+    dot.style.display='none';
+    eyebrow.textContent = 'STATUS';
+    main.textContent = 'No class right now';
+    progressTrack.style.display = 'none';
+    if(next){
+      const untilStart = toMinutes(next.start) - minutes;
+      const startsLabel = untilStart <= 1 ? 'starting now' : `starts in ${untilStart} min`;
+      detail.innerHTML = `Next up: <b>${next.course}</b> — <b>${startsLabel}</b> (${next.start})`;
+    } else {
+      detail.textContent = 'No more classes scheduled today.';
+    }
+  }
+  markLiveRows();
+}
+
+setInterval(()=>{ document.getElementById('clockDisplay').textContent = fmtClock(new Date()); }, 1000);
+</script>
+</body>
+</html>
