@@ -11,11 +11,19 @@ export function Navbar() {
   const { dark, toggle } = useTheme()
   const home = user?.role === 'cr' ? '/cr' : user?.role === 'teacher' ? '/teacher' : '/student'
 
+  const roleBadgeStyle =
+    user?.role === 'cr'
+      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+      : user?.role === 'teacher'
+      ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
+      : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+
   return (
     <nav className="sticky top-0 z-20 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-700">
       <div className="max-w-6xl mx-auto flex items-center justify-between px-4 py-3">
-        <Link to={user ? home : '/'} className="font-bold text-brand-blue">
-          Smart Attendance Tracker
+        <Link to={user ? home : '/'} className="font-bold text-brand-blue flex items-center gap-2">
+          <span>🎓</span>
+          <span>Smart Attendance Tracker</span>
         </Link>
         <div className="flex items-center gap-3">
           <button className="btn-outline text-sm" onClick={toggle} aria-label="Toggle theme">
@@ -23,7 +31,12 @@ export function Navbar() {
           </button>
           {user && (
             <>
-              <span className="text-sm hidden sm:inline">{user.name} · {user.role}</span>
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="text-sm font-medium">{user.name}</span>
+                <span className={`badge uppercase font-semibold text-[10px] ${roleBadgeStyle}`}>
+                  {user.role}
+                </span>
+              </div>
               <button
                 className="btn-outline text-sm"
                 onClick={async () => {
@@ -44,9 +57,12 @@ export function Navbar() {
 /* ---------- Protected route ---------- */
 export function ProtectedRoute({ role, children }: { role: Role; children: ReactNode }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="p-8 text-center">Loading…</div>
+  if (loading) return <div className="p-8 text-center text-slate-500">Loading session…</div>
   if (!user) return <Navigate to="/" replace />
-  if (user.role !== role) return <Navigate to="/" replace />
+  if (user.role !== role) {
+    const home = user.role === 'cr' ? '/cr' : user.role === 'teacher' ? '/teacher' : '/student'
+    return <Navigate to={home} replace />
+  }
   return <>{children}</>
 }
 

@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { Navbar, ProtectedRoute, ToastProvider } from './components/Shared'
 import AuthPage from './pages/AuthPage'
 import CRDashboard from './pages/CRDashboard'
@@ -14,6 +14,7 @@ export default function App() {
         <Route path="/student" element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>} />
         <Route path="/teacher" element={<ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>} />
         <Route path="/cr" element={<ProtectedRoute role="cr"><CRDashboard /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ToastProvider>
   )

@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://raghav3907-svg.github.io/attendence-tracker",
+  "homepage": "https://gurltff.github.io/attendencetracker-",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

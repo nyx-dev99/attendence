@@ -3,11 +3,17 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 const Ctx = createContext<{ dark: boolean; toggle: () => void }>({ dark: false, toggle: () => {} })
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [dark, setDark] = useState<boolean>(() => localStorage.getItem('sat_theme') === 'dark')
+  const [dark, setDark] = useState<boolean>(() =>
+    typeof localStorage !== 'undefined' ? localStorage.getItem('sat_theme') === 'dark' : false
+  )
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark)
-    localStorage.setItem('sat_theme', dark ? 'dark' : 'light')
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', dark)
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('sat_theme', dark ? 'dark' : 'light')
+    }
   }, [dark])
 
   return <Ctx.Provider value={{ dark, toggle: () => setDark((d) => !d) }}>{children}</Ctx.Provider>

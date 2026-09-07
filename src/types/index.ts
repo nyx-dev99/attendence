@@ -5,6 +5,11 @@ export interface UserProfile {
   name: string
   email: string
   role: Role
+  rollNumber?: string
+  course?: string
+  mobileNumber?: string
+  emailNotificationsEnabled?: boolean
+  assignedClass?: string
   enrolledCourseIds?: string[]
   assignedCourseIds?: string[]
   createdAt: number
@@ -45,16 +50,22 @@ export interface GeoTag {
 export type LocationStatus = 'captured' | 'unavailable' | 'denied'
 export type AttendanceSource = 'teacher_marked' | 'student_self_checkin'
 export type AttendanceStatus = 'present' | 'absent'
+export type VerificationStatus = 'pending' | 'verified' | 'rejected'
 
 export interface AttendanceRecord {
   id: string
   studentId: string
   studentName: string
+  rollNumber?: string
   courseId: string
   courseName: string
   date: string // YYYY-MM-DD
+  time?: string // HH:MM AM/PM
   status: AttendanceStatus
   source: AttendanceSource
+  verificationStatus?: VerificationStatus
+  verifiedBy?: string
+  verifiedAt?: number
   photoUrl?: string
   photoTimestamp?: number
   geoTag?: GeoTag
@@ -80,4 +91,18 @@ export interface AttendanceSession {
   courseName: string
   date: string
   createdAt: number
+  totalStudents?: number
+  presentCount?: number
+  absentCount?: number
+}
+
+export interface NotificationItem {
+  id: string
+  userId: string
+  userEmail: string
+  title: string
+  message: string
+  type: 'missed_class' | 'shortage_warning' | 'announcement' | 'verification'
+  createdAt: number
+  read: boolean
 }
